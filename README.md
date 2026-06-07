@@ -118,5 +118,3 @@ docker push us.icr.io/YOUR_NAMESPACE/fitnutribuddy
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 =======
-# FitNutriBuddy-
->>>>>>> d5b96aeca39b58b3a29d7f5c20e0ef83de192147
