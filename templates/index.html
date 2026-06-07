@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitNutriBuddy — AI Health Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<!-- Marked JS for robust Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--bg2:#111;--bg3:#181818;--bg4:#1f1f1f;
+  --green:#b5f23a;--green2:#8fc42a;--teal:#2effd6;
+  --text:#f0f0f0;--text2:#9a9a9a;--text3:#555;
+  --border:#2a2a2a;--border2:#333;--card:#141414;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.app{flex:1;display:flex;flex-direction:column;max-width:1100px;margin:0 auto;width:100%;min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo-wrap{display:flex;align-items:center;gap:10px}
+.logo-mark{width:38px;height:38px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#0a0a0a;font-size:20px}
+.logo-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;line-height:1}
+.logo-tag{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.step-track{display:flex;gap:6px;align-items:center}
+.stp{height:4px;width:32px;border-radius:2px;background:var(--border2);transition:all 0.3s}
+.stp.done{background:var(--green2)}
+.stp.active{background:var(--green);width:48px;box-shadow:0 0 10px rgba(181,242,58,0.5)}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;flex:1;animation:fadeUp 0.3s ease}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ONBOARDING */
+.ob-wrap{flex:1;overflow-y:auto;padding:32px 32px 16px;max-width:700px;margin:0 auto;width:100%}
+.ob-step-label{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:8px}
+.ob-title{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:2px;line-height:1;margin-bottom:8px}
+.ob-sub{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.7}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg.one{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+.field input,.field select{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s}
+.field input:focus,.field select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(181,242,58,0.08)}
+.field select option{background:var(--bg3)}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:12px;margin-top:4px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.pill-row{display:flex;flex-wrap:wrap;gap:7px}
+.pill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all 0.18s;user-select:none}
+.pill:hover{border-color:var(--green);color:var(--text)}
+.pill.on{background:rgba(181,242,58,0.12);border-color:var(--green);color:var(--green);box-shadow:0 0 12px rgba(181,242,58,0.1)}
+.bmi-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 14px;border-radius:20px;margin-top:8px;font-weight:600;border:1px solid}
+.bmi-ok{background:rgba(181,242,58,0.1);color:var(--green);border-color:rgba(181,242,58,0.3)}
+.bmi-warn{background:rgba(239,159,39,0.1);color:#ef9f27;border-color:rgba(239,159,39,0.3)}
+.bmi-bad{background:rgba(226,75,74,0.1);color:#e24b4a;border-color:rgba(226,75,74,0.3)}
+.div-line{height:1px;background:var(--border);margin:22px 0}
+
+/* FOOTER */
+.ob-footer{padding:16px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
+.btn-main{padding:11px 26px;background:var(--green);color:#0a0a0a;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.5px;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-main:hover{background:#c8ff40;box-shadow:0 0 24px rgba(181,242,58,0.35)}
+.btn-main:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed;box-shadow:none}
+.btn-back{padding:11px 20px;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-back:hover{color:var(--text);background:var(--bg3)}
+.step-lbl{font-size:12px;color:var(--text3)}
+
+/* DASHBOARD */
+.dash{flex:1;display:flex;flex-direction:column}
+.plan-hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.greeting{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px}
+.greeting span{color:var(--green)}
+.mode-tabs{display:flex;gap:2px;background:var(--bg3);padding:3px;border-radius:10px;border:1px solid var(--border)}
+.mtab{padding:7px 16px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all 0.18s;letter-spacing:0.3px;font-family:'DM Sans',sans-serif}
+.mtab.active{background:var(--green);color:#0a0a0a}
+.mtab:not(.active):hover{color:var(--text);background:var(--bg4)}
+.dash-body{flex:1;display:flex;min-height:0}
+
+/* SIDEBAR */
+.pside{width:200px;border-right:1px solid var(--border);padding:16px 12px;background:var(--bg2);display:flex;flex-direction:column;gap:5px;overflow-y:auto}
+.prof-card{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
+.prof-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:radial-gradient(circle,rgba(181,242,58,0.15),transparent 70%);pointer-events:none}
+.prof-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:10px}
+.prof-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)}
+.prof-row:last-child{border:none}
+.prof-row .k{color:var(--text2)}
+.prof-row .v{font-weight:600}
+.lb{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:0.5px}
+.lb-b{background:rgba(181,242,58,0.12);color:var(--green);border:1px solid rgba(181,242,58,0.25)}
+.lb-i{background:rgba(239,159,39,0.12);color:#ef9f27;border:1px solid rgba(239,159,39,0.25)}
+.lb-a{background:rgba(226,75,74,0.12);color:#e24b4a;border:1px solid rgba(226,75,74,0.25)}
+.lb-at{background:rgba(46,255,214,0.12);color:var(--teal);border:1px solid rgba(46,255,214,0.25)}
+.sb-sec{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:3px 4px 6px;margin-top:6px}
+.sb-btn{padding:8px 10px;font-size:12px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;text-align:left;width:100%;transition:all 0.18s;line-height:1.35;font-family:'DM Sans',sans-serif;margin-bottom:2px}
+.sb-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--green)}
+.sb-btn i{font-size:12px;margin-right:6px;vertical-align:-1px;color:var(--green)}
+
+/* PLAN VIEW */
+.plan-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.plan-view{flex:1;overflow-y:auto;padding:20px}
+.ptab-row{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.ptab{padding:7px 18px;font-size:12px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all 0.2s;font-weight:600;font-family:'DM Sans',sans-serif}
+.ptab:hover{border-color:var(--green);color:var(--text)}
+.ptab.act-f{background:rgba(181,242,58,0.12);border-color:var(--green);color:var(--green)}
+.ptab.act-n{background:rgba(46,255,214,0.12);border-color:var(--teal);color:var(--teal)}
+.plan-card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.plan-card strong{color:var(--green);font-weight:600}
+.plan-card ul{padding-left:18px;font-size:13px;color:var(--text2);line-height:1.9}
+.plan-card li{margin-bottom:2px}
+.loading-plan{display:flex;align-items:center;gap:10px;padding:40px 20px;color:var(--text2);font-size:13px}
+.gd{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite}
+.gd:nth-child(2){animation-delay:0.2s}.gd:nth-child(3){animation-delay:0.4s}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 8px var(--green)}}
+
+/* CHAT */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 16px 0}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;bottom:0;left:0;height:3px;background:var(--green);width:var(--fill,30%)}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px}
+.stat-lbl{font-size:10px;color:var(--text2);font-weight:500;letter-spacing:0.5px;margin-top:1px}
+.msgs{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;min-height:320px;max-height:400px}
+.msg{display:flex;gap:8px;align-items:flex-start;animation:fadeUp 0.2s ease}
+.msg.user{flex-direction:row-reverse}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;letter-spacing:0.5px}
+.av.bot{background:rgba(181,242,58,0.15);color:var(--green);border:1px solid rgba(181,242,58,0.25)}
+.av.user{background:rgba(46,255,214,0.1);color:var(--teal);border:1px solid rgba(46,255,214,0.2)}
+.bub{max-width:78%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6}
+.bub.bot{background:var(--bg3);border:1px solid var(--border2);border-top-left-radius:3px;color:var(--text)}
+.bub.user{background:rgba(181,242,58,0.1);border:1px solid rgba(181,242,58,0.2);border-top-right-radius:3px;color:#d4f070}
+.bub ul{padding-left:15px;margin-top:4px}.bub li{margin-bottom:2px}
+.bub strong{color:var(--green)}
+.typing-bub{display:flex;align-items:center;gap:5px;padding:8px 0}
+.inp-row{border-top:1px solid var(--border);padding:14px 16px;display:flex;gap:8px;align-items:center;background:var(--bg2)}
+.inp-row textarea{flex:1;resize:none;border:1px solid var(--border2);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg3);line-height:1.5;min-height:38px;max-height:100px;outline:none;transition:border-color 0.2s}
+.inp-row textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(181,242,58,0.07)}
+.inp-row textarea::placeholder{color:var(--text3)}
+.send-btn{width:38px;height:38px;border-radius:10px;border:none;background:var(--green);color:#0a0a0a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all 0.2s}
+.send-btn:hover{background:#c8ff40;box-shadow:0 0 20px rgba(181,242,58,0.4)}
+.send-btn:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed;box-shadow:none}
+.edit-link{font-size:11px;color:var(--text2);cursor:pointer;background:var(--bg3);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.edit-link:hover{color:var(--green);border-color:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="logo-wrap">
+      <div class="logo-mark"><i class="ti ti-activity"></i></div>
+      <div>
+        <div class="logo-name">FitNutriBuddy</div>
+        <div class="logo-tag">AI Health Companion</div>
+      </div>
+    </div>
+    <div class="step-track" id="step-track">
+      <div class="stp active" id="sd0"></div>
+      <div class="stp" id="sd1"></div>
+      <div class="stp" id="sd2"></div>
+      <div class="stp" id="sd3"></div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Basic Info -->
+  <div class="screen active" id="sc-0">
+    <div class="ob-wrap">
+      <div class="ob-step-label">Step 01 — Profile</div>
+      <div class="ob-title">Tell us about<br>yourself</div>
+      <div class="ob-sub">Fill in your details and we'll build a fully personalized plan just for you.</div>
+      <div class="fg">
+        <div class="field"><label>Full name</label><input id="f-name" type="text" placeholder="e.g. Priya Sharma"></div>
+        <div class="field"><label>Age</label><input id="f-age" type="number" placeholder="28" min="10" max="90"></div>
+        <div class="field"><label>Gender</label>
+          <select id="f-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Non-binary</option><option>Prefer not to say</option></select>
+        </div>
+        <div class="field"><label>Height (cm)</label><input id="f-height" type="number" placeholder="165" min="100" max="230"></div>
+        <div class="field"><label>Current weight (kg)</label><input id="f-weight" type="number" placeholder="70"></div>
+        <div class="field"><label>Target weight (kg)</label><input id="f-target" type="number" placeholder="62"></div>
+      </div>
+      <div id="bmi-out" style="margin-top:10px"></div>
+      <div class="div-line"></div>
+      <div class="sec-title">Primary goal</div>
+      <div class="pill-row" id="goal-pills">
+        <div class="pill" data-v="Weight loss">Weight loss</div>
+        <div class="pill" data-v="Muscle gain">Muscle gain</div>
+        <div class="pill" data-v="Improve endurance">Endurance</div>
+        <div class="pill" data-v="Increase flexibility">Flexibility</div>
+        <div class="pill" data-v="General fitness">General fitness</div>
+        <div class="pill" data-v="Stress relief">Stress relief</div>
+        <div class="pill" data-v="Body recomposition">Body recomp</div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <div class="step-lbl">1 of 4</div>
+      <button class="btn-main" onclick="goStep(1)">Continue <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Fitness -->
+  <div class="screen" id="sc-1">
+    <div class="ob-wrap">
+      <div class="ob-step-label">Step 02 — Fitness</div>
+      <div class="ob-title">Your fitness<br>profile</div>
+      <div class="ob-sub">Match workouts to your real ability and schedule.</div>
+      <div class="sec-title">Fitness level</div>
+      <div class="pill-row" id="level-pills">
+        <div class="pill" data-v="Beginner">Beginner</div><div class="pill" data-v="Intermediate">Intermediate</div>
+        <div class="pill" data-v="Advanced">Advanced</div><div class="pill" data-v="Athlete">Athlete</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="sec-title">Workout types <span style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400">(pick all)</span></div>
+      <div class="pill-row" id="wtype-pills">
+        <div class="pill" data-v="Cardio">Cardio</div><div class="pill" data-v="Strength training">Strength</div>
+        <div class="pill" data-v="HIIT">HIIT</div><div class="pill" data-v="Yoga">Yoga</div>
+        <div class="pill" data-v="Pilates">Pilates</div><div class="pill" data-v="Calisthenics">Calisthenics</div>
+        <div class="pill" data-v="Swimming">Swimming</div><div class="pill" data-v="Cycling">Cycling</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="sec-title">Body areas <span style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400">(pick all)</span></div>
+      <div class="pill-row" id="area-pills">
+        <div class="pill" data-v="Abs & core">Abs & core</div><div class="pill" data-v="Chest">Chest</div>
+        <div class="pill" data-v="Back">Back</div><div class="pill" data-v="Arms">Arms</div>
+        <div class="pill" data-v="Legs">Legs</div><div class="pill" data-v="Shoulders">Shoulders</div>
+        <div class="pill" data-v="Glutes">Glutes</div><div class="pill" data-v="Full body">Full body</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="fg">
+        <div class="field"><label>Days per week</label>
+          <select id="f-days"><option>2 days</option><option>3 days</option><option selected>4 days</option><option>5 days</option><option>6 days</option><option>7 days</option></select>
+        </div>
+        <div class="field"><label>Session length</label>
+          <select id="f-dur"><option>15–20 min</option><option>20–30 min</option><option selected>30–45 min</option><option>45–60 min</option><option>60–90 min</option></select>
+        </div>
+        <div class="field"><label>Equipment</label>
+          <select id="f-equip"><option>No equipment</option><option>Resistance bands</option><option>Dumbbells</option><option selected>Basic home gym</option><option>Full gym access</option></select>
+        </div>
+        <div class="field"><label>Injuries / limits</label><input id="f-inj" type="text" placeholder="e.g. knee pain, lower back"></div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn-back" onclick="goStep(0)"><i class="ti ti-arrow-left"></i> Back</button>
+      <div class="step-lbl">2 of 4</div>
+      <button class="btn-main" onclick="goStep(2)">Continue <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Nutrition -->
+  <div class="screen" id="sc-2">
+    <div class="ob-wrap">
+      <div class="ob-step-label">Step 03 — Nutrition</div>
+      <div class="ob-title">Your nutrition<br>profile</div>
+      <div class="ob-sub">Your diet preferences shape every meal plan we create.</div>
+      <div class="sec-title">Diet type</div>
+      <div class="pill-row" id="diet-pills">
+        <div class="pill" data-v="Vegetarian">Vegetarian</div><div class="pill" data-v="Vegan">Vegan</div>
+        <div class="pill" data-v="Non-vegetarian">Non-veg</div><div class="pill" data-v="Eggetarian">Eggetarian</div>
+        <div class="pill" data-v="Keto">Keto</div><div class="pill" data-v="Intermittent fasting">IF</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="sec-title">Allergies <span style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400">(pick all)</span></div>
+      <div class="pill-row" id="allergy-pills">
+        <div class="pill" data-v="None">None</div><div class="pill" data-v="Gluten">Gluten</div>
+        <div class="pill" data-v="Lactose">Lactose</div><div class="pill" data-v="Nuts">Nuts</div>
+        <div class="pill" data-v="Soy">Soy</div><div class="pill" data-v="Eggs">Eggs</div><div class="pill" data-v="Seafood">Seafood</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="fg">
+        <div class="field"><label>Meals per day</label>
+          <select id="f-meals"><option>2 meals</option><option>3 meals</option><option selected>3 meals + snacks</option><option>4–5 small meals</option><option>IF window</option></select>
+        </div>
+        <div class="field"><label>Cooking time</label>
+          <select id="f-cook"><option>Under 15 min</option><option selected>15–30 min</option><option>30–60 min</option><option>No limit</option></select>
+        </div>
+        <div class="field"><label>Cuisine</label>
+          <select id="f-cuis"><option selected>Indian</option><option>Mediterranean</option><option>Asian</option><option>Continental</option><option>Mixed</option></select>
+        </div>
+        <div class="field"><label>Daily water</label>
+          <select id="f-water"><option>Under 1L</option><option>1–2L</option><option selected>2–3L</option><option>3L+</option></select>
+        </div>
+      </div>
+      <div class="div-line"></div>
+      <div class="sec-title">Health conditions <span style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></div>
+      <div class="pill-row" id="health-pills">
+        <div class="pill" data-v="None">None</div><div class="pill" data-v="Diabetes">Diabetes</div>
+        <div class="pill" data-v="Hypertension">Hypertension</div><div class="pill" data-v="PCOS">PCOS</div>
+        <div class="pill" data-v="Thyroid">Thyroid</div><div class="pill" data-v="High cholesterol">High cholesterol</div>
+        <div class="pill" data-v="Anemia">Anemia</div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn-back" onclick="goStep(1)"><i class="ti ti-arrow-left"></i> Back</button>
+      <div class="step-lbl">3 of 4</div>
+      <button class="btn-main" onclick="goStep(3)">Continue <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Lifestyle -->
+  <div class="screen" id="sc-3">
+    <div class="ob-wrap">
+      <div class="ob-step-label">Step 04 — Lifestyle</div>
+      <div class="ob-title">Your daily<br>routine</div>
+      <div class="ob-sub">Last step — a few habits to complete your profile.</div>
+      <div class="fg">
+        <div class="field"><label>Sleep per night</label>
+          <select id="f-sleep"><option>Under 5hrs</option><option>5–6hrs</option><option selected>6–7hrs</option><option>7–8hrs</option><option>8+hrs</option></select>
+        </div>
+        <div class="field"><label>Activity level</label>
+          <select id="f-act"><option>Sedentary</option><option selected>Lightly active</option><option>Moderately active</option><option>Very active</option></select>
+        </div>
+        <div class="field"><label>Stress level</label>
+          <select id="f-stress"><option>Low</option><option selected>Moderate</option><option>High</option><option>Very high</option></select>
+        </div>
+        <div class="field"><label>Workout time</label>
+          <select id="f-wtime"><option>Early morning 5–7am</option><option selected>Morning 7–9am</option><option>Midday</option><option>Evening</option><option>Night</option></select>
+        </div>
+      </div>
+      <div class="div-line"></div>
+      <div class="sec-title">Motivation style</div>
+      <div class="pill-row" id="motiv-pills">
+        <div class="pill" data-v="Structured plans">Structured plans</div>
+        <div class="pill" data-v="Flexible suggestions">Flexible</div>
+        <div class="pill" data-v="Daily reminders">Daily reminders</div>
+        <div class="pill" data-v="Progress tracking">Progress tracking</div>
+        <div class="pill" data-v="Science-backed">Science-backed</div>
+      </div>
+      <div class="div-line"></div>
+      <div class="fg one">
+        <div class="field"><label>Anything else? (optional)</label>
+          <input id="f-extra" type="text" placeholder="e.g. I travel often, postpartum, night shifts...">
+        </div>
+      </div>
+    </div>
+    <div class="ob-footer">
+      <button class="btn-back" onclick="goStep(2)"><i class="ti ti-arrow-left"></i> Back</button>
+      <div class="step-lbl">4 of 4</div>
+      <button class="btn-main" id="gen-btn" onclick="generatePlans()"><i class="ti ti-sparkles"></i> Generate my plans</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="screen dash" id="sc-dash">
+    <div class="plan-hdr">
+      <div class="greeting">Hey <span id="greet-name">there</span> — your plan is ready</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="mode-tabs">
+          <button class="mtab active" onclick="setPlanMode('fitness')" id="mt-fit"><i class="ti ti-run"></i> Fitness</button>
+          <button class="mtab" onclick="setPlanMode('nutrition')" id="mt-nut"><i class="ti ti-apple"></i> Nutrition</button>
+          <button class="mtab" onclick="setPlanMode('chat')" id="mt-chat"><i class="ti ti-message"></i> Chat</button>
+        </div>
+        <button class="edit-link" onclick="goStep(0)"><i class="ti ti-edit"></i> Edit profile</button>
+        <button class="edit-link" onclick="clearCachedState()" style="border-color: rgba(226,75,74,0.3); color: #e24b4a;"><i class="ti ti-trash"></i> Reset</button>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="pside">
+        <div class="prof-card" id="pcard"></div>
+        <div class="sb-sec" id="sb-sec-lbl">Quick actions</div>
+        <div id="sb-actions"></div>
+      </div>
+      <div class="plan-col">
+        <!-- FITNESS VIEW -->
+        <div id="vw-fitness" style="display:flex;flex-direction:column;flex:1">
+          <div class="plan-view">
+            <div class="ptab-row">
+              <div class="ptab act-f" onclick="showPTab('f','fw')">Weekly workout</div>
+              <div class="ptab" onclick="showPTab('f','fm')">Monthly plan</div>
+              <div class="ptab" onclick="showPTab('f','ff')">Flexibility</div>
+            </div>
+            <div id="pf-fw"><div class="loading-plan"><div class="gd"></div><div class="gd"></div><div class="gd"></div>&nbsp;Generating your workout plan...</div></div>
+            <div id="pf-fm" style="display:none"></div>
+            <div id="pf-ff" style="display:none"></div>
+          </div>
+        </div>
+        <!-- NUTRITION VIEW -->
+        <div id="vw-nutrition" style="display:none;flex-direction:column;flex:1">
+          <div class="plan-view">
+            <div class="ptab-row">
+              <div class="ptab act-n" onclick="showPTab('n','nw')">Weekly meals</div>
+              <div class="ptab" onclick="showPTab('n','nm')">Monthly plan</div>
+              <div class="ptab" onclick="showPTab('n','nmac')">Macros</div>
+            </div>
+            <div id="pn-nw"><div class="loading-plan"><div class="gd"></div><div class="gd"></div><div class="gd"></div>&nbsp;Generating your meal plan...</div></div>
+            <div id="pn-nm" style="display:none"></div>
+            <div id="pn-nmac" style="display:none"></div>
+          </div>
+        </div>
+        <!-- CHAT VIEW -->
+        <div id="vw-chat" style="display:none;flex-direction:column;flex:1">
+          <div class="stats-row">
+            <div class="stat" style="--fill:40%"><div class="stat-val" id="cs1">0</div><div class="stat-lbl">Sessions</div></div>
+            <div class="stat" style="--fill:20%"><div class="stat-val" id="cs2">0</div><div class="stat-lbl">Cal burned</div></div>
+            <div class="stat" style="--fill:70%"><div class="stat-val">7</div><div class="stat-lbl">Day streak</div></div>
+          </div>
+          <div class="msgs" id="msgs"></div>
+          <!-- Image Attachment Preview Pane -->
+          <div id="img-preview-wrap" style="display:none; padding: 10px 16px; background: var(--bg3); border-top: 1px solid var(--border); align-items: center; gap: 10px;">
+            <div style="position:relative; width: 60px; height: 60px; border-radius: 8px; overflow:hidden; border: 1px solid var(--border2); flex-shrink:0;">
+              <img id="img-preview" src="" style="width:100%; height:100%; object-fit:cover;">
+              <button onclick="clearImage()" style="position:absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;"><i class="ti ti-x"></i></button>
+            </div>
+            <div style="font-size:11px; color: var(--text2);">Food photo or label attached. It will be analyzed upon send.</div>
+          </div>
+          <div class="inp-row">
+            <input type="file" id="img-upload" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+            <button class="send-btn" style="background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); margin-right: 2px;" onclick="document.getElementById('img-upload').click()" title="Attach image"><i class="ti ti-paperclip"></i></button>
+            <button class="send-btn" id="voice-btn" style="background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); margin-right: 4px;" onclick="toggleVoiceInput()" title="Voice typing"><i class="ti ti-microphone"></i></button>
+            <textarea id="usr-inp" placeholder="Ask anything about your plan, workouts, meals..." rows="1" onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" onclick="sendMsg()" id="send-btn"><i class="ti ti-send"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────
+const API_BASE = '';
+
+let P = {}, isLoad = false, mHist = [], planMode = 'fitness';
+let attachedImageBase64 = null;
+let recognition = null;
+let isRecording = false;
+
+// ─── PILL LOGIC ────────────────────────────────────────────
+function initPills() {
+  const singles = ['goal-pills','level-pills','diet-pills','motiv-pills'];
+  const multis  = ['wtype-pills','area-pills','allergy-pills','health-pills'];
+  singles.forEach(id => document.querySelectorAll(`#${id} .pill`).forEach(p => {
+    p.addEventListener('click', () => { document.querySelectorAll(`#${id} .pill`).forEach(x=>x.classList.remove('on')); p.classList.add('on'); });
+  }));
+  multis.forEach(id => document.querySelectorAll(`#${id} .pill`).forEach(p => {
+    p.addEventListener('click', () => p.classList.toggle('on'));
+  }));
+}
+function getS(id){ const e=document.querySelector(`#${id} .pill.on`); return e?e.dataset.v:null; }
+function getM(id){ return [...document.querySelectorAll(`#${id} .pill.on`)].map(p=>p.dataset.v); }
+function gv(id){ return document.getElementById(id)?.value||''; }
+
+// ─── BMI ───────────────────────────────────────────────────
+function updateBMI() {
+  const h=parseFloat(gv('f-height')), w=parseFloat(gv('f-weight'));
+  const d=document.getElementById('bmi-out');
+  if(h>0&&w>0){
+    const b=(w/((h/100)**2)).toFixed(1);
+    let lbl,cls;
+    if(b<18.5){lbl='Underweight';cls='bmi-warn';}
+    else if(b<25){lbl='Healthy weight';cls='bmi-ok';}
+    else if(b<30){lbl='Overweight';cls='bmi-warn';}
+    else{lbl='Obese';cls='bmi-bad';}
+    d.innerHTML=`<span class="bmi-badge ${cls}"><i class="ti ti-report-analytics"></i> BMI ${b} — ${lbl}</span>`;
+  }
+}
+document.getElementById('f-height').addEventListener('input',updateBMI);
+document.getElementById('f-weight').addEventListener('input',updateBMI);
+
+// ─── NAVIGATION ────────────────────────────────────────────
+function goStep(n) {
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===n));
+  document.getElementById('sc-dash').classList.remove('active');
+  document.getElementById('step-track').style.display = 'flex';
+  ['sd0','sd1','sd2','sd3'].forEach((id,i)=>{
+    const d=document.getElementById(id);
+    d.className='stp'+(i<n?' done':i===n?' active':'');
+  });
+}
+
+// ─── COLLECT PROFILE ───────────────────────────────────────
+function collectProfile() {
+  P = {
+    name:gv('f-name')||'User', age:gv('f-age'), gender:gv('f-gender'),
+    height:gv('f-height'), weight:gv('f-weight'), target:gv('f-target'),
+    goal:getS('goal-pills')||'General fitness',
+    level:getS('level-pills')||'Beginner',
+    wtypes:getM('wtype-pills'), areas:getM('area-pills'),
+    days:gv('f-days'), dur:gv('f-dur'), equip:gv('f-equip'), inj:gv('f-inj'),
+    diet:getS('diet-pills')||'Non-vegetarian',
+    allergies:getM('allergy-pills'), meals:gv('f-meals'),
+    cook:gv('f-cook'), cuis:gv('f-cuis'), water:gv('f-water'),
+    health:getM('health-pills'),
+    sleep:gv('f-sleep'), act:gv('f-act'), stress:gv('f-stress'),
+    wtime:gv('f-wtime'), motiv:getS('motiv-pills')||'Structured plans',
+    extra:gv('f-extra')
+  };
+  const h=parseFloat(P.height), w=parseFloat(P.weight);
+  if(h&&w) P.bmi=(w/((h/100)**2)).toFixed(1);
+}
+
+// ─── SIDEBAR PROFILE CARD ──────────────────────────────────
+function buildPCard() {
+  const lc = P.level==='Beginner'?'lb-b':P.level==='Intermediate'?'lb-i':P.level==='Advanced'?'lb-a':'lb-at';
+  document.getElementById('pcard').innerHTML=`
+    <div class="prof-name">${P.name}</div>
+    <div class="prof-row"><span class="k">Age</span><span class="v">${P.age||'—'} yrs</span></div>
+    <div class="prof-row"><span class="k">BMI</span><span class="v">${P.bmi||'—'}</span></div>
+    <div class="prof-row"><span class="k">Goal</span><span class="v" style="font-size:10px">${P.goal}</span></div>
+    <div class="prof-row"><span class="k">Level</span><span class="v"><span class="lb ${lc}">${P.level}</span></span></div>
+    <div class="prof-row"><span class="k">Diet</span><span class="v" style="font-size:10px">${P.diet}</span></div>
+    <div class="prof-row"><span class="k">Days</span><span class="v">${P.days}</span></div>`;
+  document.getElementById('greet-name').textContent = P.name.split(' ')[0];
+}
+
+function buildSBActions(mode) {
+  const fa=[
+    {i:'ti-run',t:"Today's workout"},{i:'ti-circle-dashed',t:'Abs & core focus'},
+    {i:'ti-yoga',t:'Flexibility session'},{i:'ti-moon',t:'Recovery plan'},{i:'ti-trending-up',t:'Progress check'},
+  ];
+  const na=[
+    {i:'ti-salad',t:"Today's meals"},{i:'ti-replace',t:'Healthy swaps'},
+    {i:'ti-droplet',t:'Hydration tips'},{i:'ti-clock',t:'Meal timing'},{i:'ti-chart-pie',t:'Explain macros'},
+  ];
+  const actions = mode==='nutrition'?na:fa;
+  document.getElementById('sb-actions').innerHTML = actions.map(a=>
+    `<button class="sb-btn" onclick="qChat('${a.t}')"><i class="ti ${a.i}"></i>${a.t}</button>`
+  ).join('');
+}
+
+// ─── MULTIMODAL IMAGE UPLOAD ─────────────────────────────────
+function handleImageSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    attachedImageBase64 = e.target.result;
+    document.getElementById('img-preview').src = attachedImageBase64;
+    document.getElementById('img-preview-wrap').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  attachedImageBase64 = null;
+  document.getElementById('img-upload').value = '';
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('img-preview').src = '';
+}
+
+// ─── VOICE INPUT (SPEECH TO TEXT) ─────────────────────────────
+function initVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.log("Speech recognition not supported in this browser.");
+    document.getElementById('voice-btn').style.display = 'none';
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isRecording = true;
+    const btn = document.getElementById('voice-btn');
+    btn.style.background = 'rgba(226,75,74,0.15)';
+    btn.style.color = '#e24b4a';
+    btn.style.borderColor = 'rgba(226,75,74,0.3)';
+    btn.innerHTML = '<i class="ti ti-microphone-off"></i>';
+    document.getElementById('usr-inp').placeholder = "Listening... Speak now...";
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    const btn = document.getElementById('voice-btn');
+    btn.style.background = 'var(--bg3)';
+    btn.style.color = 'var(--text2)';
+    btn.style.borderColor = 'var(--border2)';
+    btn.innerHTML = '<i class="ti ti-microphone"></i>';
+    document.getElementById('usr-inp').placeholder = "Ask anything about your plan, workouts, meals...";
+  };
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    const inp = document.getElementById('usr-inp');
+    inp.value = inp.value ? inp.value + ' ' + text : text;
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error:", event.error);
+    isRecording = false;
+  };
+}
+
+function toggleVoiceInput() {
+  if (!recognition) return;
+  if (isRecording) {
+    recognition.stop();
+  } else {
+    recognition.start();
+  }
+}
+
+// ─── CACHING / STATE PERSISTENCE ──────────────────────────────
+function saveState() {
+  try {
+    localStorage.setItem('fnb_profile', JSON.stringify(P));
+    localStorage.setItem('fnb_mhist', JSON.stringify(mHist));
+    localStorage.setItem('fnb_plans', JSON.stringify({
+      fw: document.getElementById('pf-fw').innerHTML,
+      fm: document.getElementById('pf-fm').innerHTML,
+      ff: document.getElementById('pf-ff').innerHTML,
+      nw: document.getElementById('pn-nw').innerHTML,
+      nm: document.getElementById('pn-nm').innerHTML,
+      nmac: document.getElementById('pn-nmac').innerHTML,
+    }));
+  } catch (e) {
+    console.error("Failed to save state:", e);
+  }
+}
+
+function loadState() {
+  try {
+    const savedProfile = localStorage.getItem('fnb_profile');
+    const savedHist = localStorage.getItem('fnb_mhist');
+    const savedPlans = localStorage.getItem('fnb_plans');
+
+    if (savedProfile) {
+      P = JSON.parse(savedProfile);
+      
+      // Prefill onboarding fields
+      document.getElementById('f-name').value = P.name || '';
+      document.getElementById('f-age').value = P.age || '';
+      document.getElementById('f-gender').value = P.gender || '';
+      document.getElementById('f-height').value = P.height || '';
+      document.getElementById('f-weight').value = P.weight || '';
+      document.getElementById('f-target').value = P.target || '';
+      document.getElementById('f-inj').value = P.inj || '';
+      document.getElementById('f-extra').value = P.extra || '';
+
+      updateBMI();
+      buildPCard();
+
+      if (savedHist) mHist = JSON.parse(savedHist);
+
+      if (savedPlans) {
+        const plans = JSON.parse(savedPlans);
+        document.getElementById('pf-fw').innerHTML = plans.fw || '';
+        document.getElementById('pf-fm').innerHTML = plans.fm || '';
+        document.getElementById('pf-ff').innerHTML = plans.ff || '';
+        document.getElementById('pn-nw').innerHTML = plans.nw || '';
+        document.getElementById('pn-nm').innerHTML = plans.nm || '';
+        document.getElementById('pn-nmac').innerHTML = plans.nmac || '';
+      }
+
+      // Transition straight to dashboard
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('sc-dash').classList.add('active');
+      document.getElementById('step-track').style.display = 'none';
+      buildSBActions('fitness');
+      setPlanMode('fitness');
+
+      // Populate messages in chat container
+      if (mHist.length > 0) {
+        document.getElementById('msgs').innerHTML = ''; // reset first
+        mHist.forEach(msg => {
+          let role = msg.role === 'assistant' ? 'bot' : 'user';
+          let contentHTML = '';
+          if (Array.isArray(msg.content)) {
+            let txt = '';
+            let imgUrl = '';
+            msg.content.forEach(part => {
+              if (part.type === 'text') txt = part.text;
+              if (part.type === 'image_url') imgUrl = part.image_url.url;
+            });
+            contentHTML = imgUrl ? `<img src="${imgUrl}" style="max-width:100%; max-height:200px; border-radius:8px; display:block; margin-bottom:8px;">` + txt : txt;
+          } else {
+            contentHTML = msg.content;
+          }
+          addMsg(role, role === 'bot' ? fmt(contentHTML) : contentHTML);
+        });
+      }
+    }
+  } catch(e) {
+    console.error("Error loading cached state:", e);
+  }
+}
+
+function clearCachedState() {
+  localStorage.removeItem('fnb_profile');
+  localStorage.removeItem('fnb_mhist');
+  localStorage.removeItem('fnb_plans');
+  window.location.reload();
+}
+
+// ─── GENERATE ALL PLANS via Django ──────────────────────────
+async function generatePlans() {
+  collectProfile();
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Generating...';
+
+  // Show dashboard loaders
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-dash').classList.add('active');
+  document.getElementById('step-track').style.display = 'none';
+  
+  // Set placeholder loading states
+  const loaderHTML = (text) => `<div class="loading-plan"><div class="gd"></div><div class="gd"></div><div class="gd"></div>&nbsp;${text}</div>`;
+  document.getElementById('pf-fw').innerHTML = loaderHTML('Generating your weekly workout...');
+  document.getElementById('pf-fm').innerHTML = loaderHTML('Generating your monthly workout...');
+  document.getElementById('pf-ff').innerHTML = loaderHTML('Generating your flexibility routine...');
+  document.getElementById('pn-nw').innerHTML = loaderHTML('Generating your weekly meal plan...');
+  document.getElementById('pn-nm').innerHTML = loaderHTML('Generating your monthly nutrition progression...');
+  document.getElementById('pn-nmac').innerHTML = loaderHTML('Calculating macros targets...');
+
+  buildPCard(); buildSBActions('fitness'); setPlanMode('fitness');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/generate-all/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: P })
+    });
+    const data = await res.json();
+    const plans = data.plans || {};
+    const errors = data.errors || {};
+
+    const setPlanOrError = (key, cardId, title) => {
+      if (plans[key]) {
+        setCard(cardId, fmt(plans[key]));
+      } else if (errors[key]) {
+        setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Error generating ${title}: ${errors[key]}</span>`);
+      } else {
+        setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Failed to generate ${title}.</span>`);
+      }
+    };
+
+    setPlanOrError('weekly_workout', 'pf-fw', 'weekly workout plan');
+    setPlanOrError('monthly_workout', 'pf-fm', 'monthly workout progression');
+    setPlanOrError('flexibility', 'pf-ff', 'flexibility routine');
+    setPlanOrError('weekly_diet', 'pn-nw', 'weekly meal plan');
+    setPlanOrError('monthly_diet', 'pn-nm', 'monthly nutrition plan');
+    setPlanOrError('macros', 'pn-nmac', 'macros targets');
+
+    addMsg('bot', `All plans ready for <strong>${P.name.split(' ')[0]}</strong>! Explore your weekly & monthly workout plan, meal plan, flexibility routine, and macros — all tailored to your profile. Switch tabs to explore, or ask me anything in Chat!`);
+    
+    saveState();
+  } catch(e) {
+    const errMsg = '<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Error generating plan. Please configure Watsonx.ai environment variables in your server.</span>';
+    setCard('pf-fw', errMsg); setCard('pf-fm', errMsg); setCard('pf-ff', errMsg);
+    setCard('pn-nw', errMsg); setCard('pn-nm', errMsg); setCard('pn-nmac', errMsg);
+  }
+  btn.disabled = false;
+}
+
+// ─── PLAN VIEW SWITCHING ───────────────────────────────────
+function setPlanMode(m) {
+  planMode = m;
+  document.getElementById('mt-fit').classList.toggle('active', m==='fitness');
+  document.getElementById('mt-nut').classList.toggle('active', m==='nutrition');
+  document.getElementById('mt-chat').classList.toggle('active', m==='chat');
+  ['fitness','nutrition','chat'].forEach(x=>{
+    const vw=document.getElementById('vw-'+x);
+    if(vw) vw.style.display = m===x?'flex':'none';
+  });
+  buildSBActions(m);
+}
+
+function showPTab(mode, key) {
+  const fTabs={fw:'pf-fw',fm:'pf-fm',ff:'pf-ff'};
+  const nTabs={nw:'pn-nw',nm:'pn-nm',nmac:'pn-nmac'};
+  const tabs = mode==='f'?fTabs:nTabs;
+  const rowId = mode==='f'?'vw-fitness':'vw-nutrition';
+  Object.values(tabs).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const el=document.getElementById(tabs[key]); if(el) el.style.display='block';
+  document.querySelectorAll(`#${rowId} .ptab`).forEach((t,i)=>{
+    const keys=Object.keys(tabs);
+    t.className='ptab'+(keys[i]===key?(mode==='f'?' act-f':' act-n'):'');
+  });
+}
+
+// ─── CHAT (calls Django /api/chat/) ─────────────────────────
+function addMsg(role, html) {
+  const c=document.getElementById('msgs'); if(!c)return;
+  const d=document.createElement('div');
+  d.className='msg '+role;
+  d.innerHTML=`<div class="av ${role}">${role==='user'?'You':'AI'}</div><div class="bub ${role}">${html}</div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+
+function showTyping() {
+  const c=document.getElementById('msgs'); if(!c)return;
+  const d=document.createElement('div'); d.id='typ'; d.className='msg bot';
+  d.innerHTML=`<div class="av bot">AI</div><div class="bub bot"><div class="typing-bub"><div class="gd"></div><div class="gd"></div><div class="gd"></div></div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function rmTyping(){ const t=document.getElementById('typ'); if(t)t.remove(); }
+
+async function sendMsg() {
+  if(isLoad)return;
+  const inp=document.getElementById('usr-inp');
+  const text=inp.value.trim(); if(!text && !attachedImageBase64)return;
+  
+  inp.value=''; inp.style.height='auto';
+  
+  // Create UI user bubble
+  let userMsgHTML = text;
+  if(attachedImageBase64) {
+    userMsgHTML = `<img src="${attachedImageBase64}" style="max-width:100%; max-height:200px; border-radius:8px; display:block; margin-bottom:8px;">` + text;
+  }
+  addMsg('user', userMsgHTML);
+
+  // Format message payload for Watsonx
+  let messageObj = { role: 'user' };
+  if(attachedImageBase64) {
+    messageObj.content = [
+      { type: 'text', text: text || 'Analyze this image.' },
+      { type: 'image_url', image_url: { url: attachedImageBase64 } }
+    ];
+  } else {
+    messageObj.content = text;
+  }
+  mHist.push(messageObj);
+  
+  const currentImageB64 = attachedImageBase64;
+  clearImage(); // reset client preview state
+
+  isLoad=true; document.getElementById('send-btn').disabled=true;
+  showTyping();
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ messages: mHist, profile: P })
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Sorry, no response.';
+    rmTyping(); addMsg('bot', fmt(reply));
+    mHist.push({role:'assistant',content:reply});
+    
+    // session stats incrementation
+    const c1=document.getElementById('cs1'),c2=document.getElementById('cs2');
+    c1.textContent=Math.min(+c1.textContent+1,99);
+    c2.textContent=Math.min(+c2.textContent+Math.round(Math.random()*80+30),9999);
+    
+    saveState();
+  } catch(e){ rmTyping(); addMsg('bot','Connection error. Make sure your local Django backend is running and Watsonx is configured.'); }
+  isLoad=false; document.getElementById('send-btn').disabled=false;
+}
+
+function qChat(t){ setPlanMode('chat'); document.getElementById('usr-inp').value=t; sendMsg(); }
+
+function handleKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
+  const ta=e.target; ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,100)+'px';
+}
+
+// ─── UTILS ─────────────────────────────────────────────────
+function fmt(t){
+  // Use Marked JS parser if loaded successfully
+  if (typeof marked !== 'undefined') {
+    return marked.parse(t);
+  }
+  // Fallback simple parser
+  return t
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^#{1,3} (.+)/gm,'<strong>$1</strong>')
+    .replace(/^- (.+)/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)/gm,'<li>$2</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,m=>'<ul>'+m+'</ul>')
+    .replace(/<\/ul>\s*<ul>/g,'')
+    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+}
+function setCard(id,html){ document.getElementById(id).innerHTML=`<div class="plan-card">${html}</div>`; }
+
+initPills();
+initVoice();
+loadState();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+applications:
+  - name: fitnutribuddy
+    memory: 256M
+    instances: 1
+    buildpack: python_buildpack
+    command: gunicorn fitnutribuddy.wsgi --log-file -
+    env:
+      DJANGO_SETTINGS_MODULE: fitnutribuddy.settings
+      WATSONX_APIKEY: YOUR_IBM_CLOUD_API_KEY_HERE
+      WATSONX_PROJECT_ID: YOUR_WATSONX_PROJECT_ID_HERE
+      WATSONX_URL: https://us-south.ml.cloud.ibm.com
+      DJANGO_SECRET_KEY: YOUR_SECRET_KEY_HERE
+      DEBUG: "False"
