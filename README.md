@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 # FitNutriBuddy 🏋️‍♂️🥗
 **AI-powered personalized fitness and nutrition assistant**
-Built with Django + Anthropic Claude, deployable on IBM Cloud.
+Built with Django + IBM WatsonX AI (Granite & Llama), deployable on IBM Cloud.
 
 ---
 
@@ -52,7 +51,7 @@ pip install -r requirements.txt
 ### 2. Set up environment variables
 ```bash
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY and DJANGO_SECRET_KEY
+# Edit .env and add your WATSONX_APIKEY, WATSONX_PROJECT_ID, and DJANGO_SECRET_KEY
 ```
 
 ### 3. Collect static files
@@ -79,7 +78,8 @@ ibmcloud target --cf
 
 ### 2. Edit manifest.yml
 Replace the placeholder values:
-- `ANTHROPIC_API_KEY` → your actual Anthropic key
+- `WATSONX_APIKEY` → your actual IBM Cloud API key
+- `WATSONX_PROJECT_ID` → your WatsonX project ID
 - `DJANGO_SECRET_KEY` → a random 50-char secret string
 
 ### 3. Collect static files first
@@ -109,7 +109,7 @@ docker push us.icr.io/YOUR_NAMESPACE/fitnutribuddy
 ### 2. Deploy via IBM Cloud console
 - Go to Code Engine → Create Application
 - Point to your container image
-- Set environment variables (ANTHROPIC_API_KEY, DJANGO_SECRET_KEY)
+- Set environment variables (WATSONX_APIKEY, WATSONX_PROJECT_ID, WATSONX_URL, DJANGO_SECRET_KEY)
 
 ---
 
@@ -117,4 +117,4 @@ docker push us.icr.io/YOUR_NAMESPACE/fitnutribuddy
 ```python
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
-=======
+

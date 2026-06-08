@@ -709,42 +709,44 @@ async function generatePlans() {
 
   buildPCard(); buildSBActions('fitness'); setPlanMode('fitness');
 
-  try {
-    const res = await fetch(`${API_BASE}/api/generate-all/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile: P })
-    });
-    const data = await res.json();
-    const plans = data.plans || {};
-    const errors = data.errors || {};
+  // ── Progressive generation: one plan at a time so each appears as soon as ready ──
+  const planQueue = [
+    { plan_type: 'weekly_workout', cardId: 'pf-fw', label: 'weekly workout plan' },
+    { plan_type: 'weekly_diet',    cardId: 'pn-nw', label: 'weekly meal plan' },
+    { plan_type: 'macros',         cardId: 'pn-nmac', label: 'macros' },
+    { plan_type: 'monthly_workout',cardId: 'pf-fm', label: 'monthly workout' },
+    { plan_type: 'flexibility',    cardId: 'pf-ff', label: 'flexibility routine' },
+    { plan_type: 'monthly_diet',   cardId: 'pn-nm', label: 'monthly nutrition plan' },
+  ];
 
-    const setPlanOrError = (key, cardId, title) => {
-      if (plans[key]) {
-        setCard(cardId, fmt(plans[key]));
-      } else if (errors[key]) {
-        setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Error generating ${title}: ${errors[key]}</span>`);
+  let allOk = true;
+  for (const { plan_type, cardId, label } of planQueue) {
+    try {
+      const res = await fetch(`${API_BASE}/api/generate-plan/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_type, profile: P })
+      });
+      const data = await res.json();
+      if (data.content) {
+        setCard(cardId, fmt(data.content));
       } else {
-        setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Failed to generate ${title}.</span>`);
+        const err = data.error || 'Unknown error';
+        setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Error: ${err}</span>`);
+        allOk = false;
       }
-    };
+    } catch(e) {
+      setCard(cardId, `<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Network error generating ${label}: ${e.message}</span>`);
+      allOk = false;
+    }
+  }
 
-    setPlanOrError('weekly_workout', 'pf-fw', 'weekly workout plan');
-    setPlanOrError('monthly_workout', 'pf-fm', 'monthly workout progression');
-    setPlanOrError('flexibility', 'pf-ff', 'flexibility routine');
-    setPlanOrError('weekly_diet', 'pn-nw', 'weekly meal plan');
-    setPlanOrError('monthly_diet', 'pn-nm', 'monthly nutrition plan');
-    setPlanOrError('macros', 'pn-nmac', 'macros targets');
-
-    addMsg('bot', `All plans ready for <strong>${P.name.split(' ')[0]}</strong>! Explore your weekly & monthly workout plan, meal plan, flexibility routine, and macros — all tailored to your profile. Switch tabs to explore, or ask me anything in Chat!`);
-    
+  if (allOk) {
+    addMsg('bot', `All plans ready for <strong>${P.name.split(' ')[0]}</strong>! Explore your weekly &amp; monthly workout plan, meal plan, flexibility routine, and macros — all tailored to your profile. Switch tabs to explore, or ask me anything in Chat!`);
     saveState();
-  } catch(e) {
-    const errMsg = '<span style="color:#e24b4a"><i class="ti ti-alert-triangle"></i> Error generating plan. Please configure Watsonx.ai environment variables in your server.</span>';
-    setCard('pf-fw', errMsg); setCard('pf-fm', errMsg); setCard('pf-ff', errMsg);
-    setCard('pn-nw', errMsg); setCard('pn-nm', errMsg); setCard('pn-nmac', errMsg);
   }
   btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-sparkles"></i> Regenerate plans';
 }
 
 // ─── PLAN VIEW SWITCHING ───────────────────────────────────

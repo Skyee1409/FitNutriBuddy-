@@ -21,7 +21,8 @@ def get_client(model_id):
     return ModelInference(
         model_id=model_id,
         credentials=credentials,
-        project_id=settings.WATSONX_PROJECT_ID
+        project_id=settings.WATSONX_PROJECT_ID,
+        validate=False,   # skip model-spec GET call that causes 403
     )
 
 def parse_body(request):
@@ -76,8 +77,8 @@ class ChatView(View):
             if has_image:
                 break
 
-        # Route dynamically based on image presence
-        model_id = "meta-llama/llama-3-2-11b-vision-instruct" if has_image else "ibm/granite-3-8b-instruct"
+        # Sydney region only supports specific models; use Llama 3.3 70B Instruct
+        model_id = "meta-llama/llama-3-3-70b-instruct"
 
         formatted_messages = []
         if system:
@@ -163,7 +164,7 @@ class GeneratePlanView(View):
         ]
 
         try:
-            client = get_client(model_id="ibm/granite-3-8b-instruct")
+            client = get_client(model_id="meta-llama/llama-3-3-70b-instruct")
             params = {
                 GenParams.MAX_NEW_TOKENS: 3000,
                 GenParams.TEMPERATURE: 0.7
@@ -220,7 +221,7 @@ class GenerateAllPlansView(View):
 
         def generate_one_plan(plan_type, prompt):
             try:
-                client = get_client(model_id="ibm/granite-3-8b-instruct")
+                client = get_client(model_id="meta-llama/llama-3-3-70b-instruct")
                 params = {
                     GenParams.MAX_NEW_TOKENS: 3000,
                     GenParams.TEMPERATURE: 0.7
@@ -267,3 +268,47 @@ class HealthCheckView(View):
             'version': '1.0.0',
             'api_configured': bool(settings.WATSONX_APIKEY and settings.WATSONX_PROJECT_ID),
         })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class DebugView(View):
+    """Debug endpoint — tests WatsonX connection and returns diagnostics."""
+
+    def get(self, request):
+        import sys
+        diag = {
+            'python_version': sys.version,
+            'watsonx_url': settings.WATSONX_URL,
+            'apikey_set': bool(settings.WATSONX_APIKEY),
+            'apikey_preview': settings.WATSONX_APIKEY[:8] + '...' if settings.WATSONX_APIKEY else 'NOT SET',
+            'project_id_set': bool(settings.WATSONX_PROJECT_ID),
+            'project_id_preview': settings.WATSONX_PROJECT_ID[:8] + '...' if settings.WATSONX_PROJECT_ID else 'NOT SET',
+            'sdk_version': None,
+            'connection_test': None,
+            'error': None,
+        }
+        try:
+            import ibm_watsonx_ai
+            diag['sdk_version'] = getattr(ibm_watsonx_ai, '__version__', 'unknown')
+        except ImportError as e:
+            diag['error'] = f'SDK not installed: {e}'
+            return JsonResponse(diag, status=500)
+
+        try:
+            client = get_client(model_id='meta-llama/llama-3-3-70b-instruct')
+            response = client.chat(
+                messages=[
+                    {'role': 'system', 'content': 'You are a helpful assistant.'},
+                    {'role': 'user', 'content': 'Reply with exactly: OK'}
+                ],
+                params={GenParams.MAX_NEW_TOKENS: 10, GenParams.TEMPERATURE: 0.1}
+            )
+            reply = response['choices'][0]['message']['content']
+            diag['connection_test'] = f'SUCCESS — model replied: {reply.strip()[:100]}'
+        except Exception as e:
+            diag['connection_test'] = 'FAILED'
+            diag['error'] = str(e)
+            traceback.print_exc()
+
+        status_code = 200 if diag['connection_test'] and 'SUCCESS' in diag['connection_test'] else 500
+        return JsonResponse(diag, status=status_code)

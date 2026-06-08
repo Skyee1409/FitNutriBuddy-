@@ -26,7 +26,7 @@ try:
     print("Initializing ModelInference...")
     credentials = Credentials(url=url, api_key=apikey)
     model = ModelInference(
-        model_id="ibm/granite-3-8b-instruct",
+        model_id="meta-llama/llama-3-3-70b-instruct",
         credentials=credentials,
         project_id=project_id
     )
