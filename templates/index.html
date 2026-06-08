@@ -143,6 +143,142 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .send-btn:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed;box-shadow:none}
 .edit-link{font-size:11px;color:var(--text2);cursor:pointer;background:var(--bg3);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;transition:all 0.2s}
 .edit-link:hover{color:var(--green);border-color:var(--green)}
+
+/* Print Area Default Hidden State */
+#print-area {
+  display: none;
+}
+
+/* Print Media Query */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #111 !important;
+    background: #fff !important;
+    display: block !important;
+    font-family: 'DM Sans', sans-serif;
+  }
+  body, html {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .print-header {
+    border-bottom: 2px solid #111;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .print-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: #000;
+  }
+  .print-meta {
+    font-size: 11px;
+    text-align: right;
+    color: #555;
+  }
+  .print-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 16px;
+    margin-bottom: 25px;
+    background: #f9f9f9;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+  }
+  .print-profile-item {
+    font-size: 12px;
+    color: #333;
+  }
+  .print-profile-item strong {
+    font-weight: 600;
+    color: #000;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+  .print-plan-section {
+    page-break-after: always;
+    break-after: page;
+    margin-bottom: 30px;
+  }
+  .print-plan-section:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .print-plan-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid #111;
+    padding-bottom: 4px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: #000;
+  }
+  .print-plan-content {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #222;
+  }
+  .print-plan-content h1, .print-plan-content h2, .print-plan-content h3, .print-plan-content h4 {
+    margin-top: 12px;
+    margin-bottom: 6px;
+    color: #000;
+    font-weight: 600;
+  }
+  .print-plan-content strong {
+    color: #000;
+    font-weight: 600;
+  }
+  .print-plan-content ul, .print-plan-content ol {
+    margin-left: 20px;
+    margin-bottom: 8px;
+  }
+  .print-plan-content li {
+    margin-bottom: 3px;
+  }
+  .print-plan-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 11px;
+  }
+  .print-plan-content th, .print-plan-content td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: left;
+  }
+  .print-plan-content th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+  }
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 9px;
+    color: #777;
+    border-top: 1px solid #eee;
+    padding-top: 6px;
+    background: #fff;
+  }
+}
 </style>
 </head>
 <body>
@@ -350,6 +486,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <button class="mtab" onclick="setPlanMode('nutrition')" id="mt-nut"><i class="ti ti-apple"></i> Nutrition</button>
           <button class="mtab" onclick="setPlanMode('chat')" id="mt-chat"><i class="ti ti-message"></i> Chat</button>
         </div>
+        <button class="edit-link" onclick="exportPlansToPDF()" id="pdf-btn" style="border-color: rgba(46,255,214,0.35); color: var(--teal);"><i class="ti ti-download"></i> Export PDF</button>
         <button class="edit-link" onclick="goStep(0)"><i class="ti ti-edit"></i> Edit profile</button>
         <button class="edit-link" onclick="clearCachedState()" style="border-color: rgba(226,75,74,0.3); color: #e24b4a;"><i class="ti ti-trash"></i> Reset</button>
       </div>
@@ -415,6 +552,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 </div>
+<div id="print-area"></div>
 
 <script>
 // ─── CONFIG ────────────────────────────────────────────────
@@ -868,6 +1006,91 @@ function fmt(t){
     .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 }
 function setCard(id,html){ document.getElementById(id).innerHTML=`<div class="plan-card">${html}</div>`; }
+
+function exportPlansToPDF() {
+  const savedPlans = localStorage.getItem('fnb_plans');
+  const hasContent = document.getElementById('pf-fw').innerHTML.includes('plan-card');
+  if (!savedPlans && !hasContent) {
+    alert("Please generate your plans first before exporting!");
+    return;
+  }
+  
+  const name = P.name || 'User';
+  const age = P.age || '—';
+  const gender = P.gender || '—';
+  const height = P.height || '—';
+  const weight = P.weight || '—';
+  const target = P.target || '—';
+  const goal = P.goal || 'General fitness';
+  const level = P.level || 'Beginner';
+  const diet = P.diet || 'Non-vegetarian';
+  const days = P.days || '3 days';
+  const bmi = P.bmi || '—';
+
+  const plans = {
+    'Weekly Workout Plan': document.getElementById('pf-fw').innerHTML,
+    'Weekly Meals & Diet': document.getElementById('pn-nw').innerHTML,
+    'Macro Targets': document.getElementById('pn-nmac').innerHTML,
+    'Monthly Workout Progression': document.getElementById('pf-fm').innerHTML,
+    'Flexibility & Stretching': document.getElementById('pf-ff').innerHTML,
+    'Monthly Nutrition Progression': document.getElementById('pn-nm').innerHTML,
+  };
+
+  let printContent = `
+    <div class="print-header">
+      <div class="print-logo">FitNutriBuddy</div>
+      <div class="print-meta">
+        <strong>Personalized Fitness & Nutrition Companion</strong><br>
+        Generated on: ${new Date().toLocaleDateString()}
+      </div>
+    </div>
+    
+    <div class="print-plan-title">User Health Profile</div>
+    <div class="print-profile-grid">
+      <div class="print-profile-item"><strong>Name:</strong> ${name}</div>
+      <div class="print-profile-item"><strong>Age / Gender:</strong> ${age} / ${gender}</div>
+      <div class="print-profile-item"><strong>Height / Weight:</strong> ${height} cm / ${weight} kg</div>
+      <div class="print-profile-item"><strong>Target Weight:</strong> ${target} kg</div>
+      <div class="print-profile-item"><strong>BMI:</strong> ${bmi}</div>
+      <div class="print-profile-item"><strong>Primary Goal:</strong> ${goal}</div>
+      <div class="print-profile-item"><strong>Fitness Level:</strong> ${level}</div>
+      <div class="print-profile-item"><strong>Diet Type:</strong> ${diet}</div>
+      <div class="print-profile-item"><strong>Workout Frequency:</strong> ${days}</div>
+    </div>
+  `;
+  
+  let addedSections = 0;
+  for (const [title, html] of Object.entries(plans)) {
+    if (html.includes('loading-plan') || html.trim() === '') {
+      continue;
+    }
+    printContent += `
+      <div class="print-plan-section">
+        <div class="print-plan-title">${title}</div>
+        <div class="print-plan-content">${html}</div>
+      </div>
+    `;
+    addedSections++;
+  }
+  
+  if (addedSections === 0) {
+    alert("Please wait for the plans to finish generating before exporting!");
+    return;
+  }
+  
+  printContent += `
+    <div class="print-footer">
+      FitNutriBuddy AI Health Companion | Powered by IBM Watsonx AI
+    </div>
+  `;
+  
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = printContent;
+  
+  window.print();
+  
+  printArea.innerHTML = '';
+}
 
 initPills();
 initVoice();
