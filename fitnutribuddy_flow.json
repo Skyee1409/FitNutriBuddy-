@@ -1,0 +1,137 @@
+{
+  "name": "FitNutriBuddy Plan Flow",
+  "description": "Visual orchestrator using LangFlow, watsonx.ai, and IBM Granite to generate personalized fitness and nutrition plans.",
+  "data": {
+    "nodes": [
+      {
+        "id": "chat_input_node_0",
+        "type": "ChatInput",
+        "data": {
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "value": "User Profile Context data goes here",
+                "name": "input_value",
+                "required": true
+              }
+            },
+            "description": "Captures raw user profile metrics and plan selection."
+          }
+        },
+        "position": { "x": 100, "y": 250 }
+      },
+      {
+        "id": "prompt_template_node_1",
+        "type": "Prompt",
+        "data": {
+          "node": {
+            "template": {
+              "template": {
+                "type": "str",
+                "value": "System Prompt: You are FitNutriBuddy, an expert AI fitness and nutrition trainer.\nHere is the user profile context:\n{profile_context}\n\nPlease generate a highly personalized plan for the following request:\n{plan_prompt}",
+                "name": "template",
+                "required": true
+              },
+              "profile_context": {
+                "type": "str",
+                "value": "",
+                "name": "profile_context"
+              },
+              "plan_prompt": {
+                "type": "str",
+                "value": "Generate a detailed weekly workout split",
+                "name": "plan_prompt"
+              }
+            },
+            "description": "Merges system instructions, profile metrics, and prompts."
+          }
+        },
+        "position": { "x": 400, "y": 200 }
+      },
+      {
+        "id": "watsonx_model_node_2",
+        "type": "WatsonxModel",
+        "data": {
+          "node": {
+            "template": {
+              "model_name": {
+                "type": "str",
+                "value": "ibm/granite-3-8b-instruct",
+                "name": "model_name",
+                "required": true
+              },
+              "api_url": {
+                "type": "str",
+                "value": "https://au-syd.ml.cloud.ibm.com",
+                "name": "api_url",
+                "required": true
+              },
+              "api_key": {
+                "type": "str",
+                "value": "YOUR_WATSONX_APIKEY_HERE",
+                "name": "api_key",
+                "required": true
+              },
+              "project_id": {
+                "type": "str",
+                "value": "fd73b5f6-dce3-4ae9-9a55-e5d6a709f4a8",
+                "name": "project_id",
+                "required": true
+              },
+              "temperature": {
+                "type": "float",
+                "value": 0.7,
+                "name": "temperature"
+              },
+              "max_tokens": {
+                "type": "int",
+                "value": 3000,
+                "name": "max_tokens"
+              }
+            },
+            "description": "IBM watsonx.ai foundation model connector."
+          }
+        },
+        "position": { "x": 750, "y": 250 }
+      },
+      {
+        "id": "chat_output_node_3",
+        "type": "ChatOutput",
+        "data": {
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "value": "",
+                "name": "input_value"
+              }
+            },
+            "description": "Retrieves generated plan responses for output rendering."
+          }
+        },
+        "position": { "x": 1100, "y": 250 }
+      }
+    ],
+    "edges": [
+      {
+        "source": "chat_input_node_0",
+        "target": "prompt_template_node_1",
+        "sourceHandle": "input_value",
+        "targetHandle": "profile_context"
+      },
+      {
+        "source": "prompt_template_node_1",
+        "target": "watsonx_model_node_2",
+        "sourceHandle": "prompt",
+        "targetHandle": "prompt"
+      },
+      {
+        "source": "watsonx_model_node_2",
+        "target": "chat_output_node_3",
+        "sourceHandle": "text",
+        "targetHandle": "input_value"
+      }
+    ]
+  }
+}
