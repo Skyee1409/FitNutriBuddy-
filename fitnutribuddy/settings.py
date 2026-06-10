@@ -17,6 +17,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '.mybluemix.net',        # IBM Cloud Foundry
     '.appdomain.cloud',      # IBM Code Engine
+    '.onrender.com',         # Render
 ]
 if IBM_HOST:
     ALLOWED_HOSTS.append(IBM_HOST)
@@ -84,8 +85,9 @@ WATSONX_PROJECT_ID = os.environ.get('WATSONX_PROJECT_ID', '')
 WATSONX_URL = os.environ.get('WATSONX_URL', 'https://au-syd.ml.cloud.ibm.com')
 
 
-# CSRF trusted origins for IBM Cloud
+# CSRF trusted origins for IBM Cloud and Render
 CSRF_TRUSTED_ORIGINS = [
     'https://*.mybluemix.net',
     'https://*.appdomain.cloud',
+    'https://*.onrender.com',
 ]
